@@ -1,5 +1,5 @@
 import React from "react";
-import Bot from "./components/bot";
+import Bot from "./components/Bot";
 import ThreeScene from "./components/ThreeScene";
 
 const App = () => {
