@@ -62,7 +62,7 @@ const Bot = () => {
 
 			// Load font and add text to the ground
 			const fontLoader = new FontLoader();
-			fontLoader.load("helvetiker_bold.typeface.json", (font) => {
+			fontLoader.load("static/fonts/helvetiker_bold.typeface.json", (font) => {
 				const textGeometry = new TextGeometry(
 					"Hello World\n made by Anshul Yadav",
 					{
@@ -209,8 +209,6 @@ const Bot = () => {
 				const newPosition = model.position
 					.clone()
 					.add(forwardDirection.multiplyScalar(moveSpeed * delta));
-
-				const modelBoundingBox = new THREE.Box3().setFromObject(model);
 
 				raycaster.ray.origin.copy(model.position);
 				raycaster.ray.direction.copy(forwardDirection);
