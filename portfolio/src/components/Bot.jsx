@@ -60,8 +60,8 @@ const Bot = () => {
 			const pointLight2 = new THREE.PointLight(0xffffff, 30, 100);
 			pointLight2.position.set(1, 4, 0);
 			pointLight2.castShadow = true;
-			pointLight2.shadow.mapSize.width = 256;
-			pointLight2.shadow.mapSize.height = 256;
+			pointLight2.shadow.mapSize.width = 1024;
+			pointLight2.shadow.mapSize.height = 1024;
 			pointLight2.shadow.camera.near = 0.5;
 			pointLight2.shadow.camera.far = 50;
 			scene.add(pointLight2);
@@ -76,34 +76,34 @@ const Bot = () => {
 			// scene.add(mesh);
 
 			// Load font and add text to the ground
-			const fontLoader = new FontLoader();
-			fontLoader.load("static/fonts/helvetiker_bold.typeface.json", (font) => {
-				const textGeometry = new TextGeometry(
-					"Hello World\n made by Anshul Yadav",
-					{
-						font: font,
-						size: 0.1,
-						depth: 0.01,
-						curveSegments: 12,
-						bevelEnabled: false,
-						bevelThickness: 1,
-						bevelSize: 0.0001,
-						bevelOffset: 0,
-						bevelSegments: 3,
+			function createtext(text, x, y, z, color) {
+				const fontLoader = new FontLoader();
+				fontLoader.load(
+					"static/fonts/helvetiker_bold.typeface.json",
+					(font) => {
+						const textGeometry = new TextGeometry(text, {
+							font: font,
+							size: 0.1,
+							depth: 0.01,
+							curveSegments: 12,
+							bevelEnabled: false,
+							bevelThickness: 1,
+							bevelSize: 0.0001,
+							bevelOffset: 0,
+							bevelSegments: 3,
+						});
+
+						const textMaterial = new THREE.MeshBasicMaterial({ color: color });
+						const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+						textMesh.position.set(x - 0.25, y, z - 0.5);
+						textMesh.rotation.x = -Math.PI / 2;
+						textMesh.castShadow = false;
+						textMesh.receiveShadow = false;
+
+						scene.add(textMesh);
 					}
 				);
-
-				const textMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-				const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-				textMesh.position.set(0, 0.2, -5);
-				textMesh.rotation.x = -Math.PI / 2;
-				textMesh.castShadow = true;
-				textMesh.receiveShadow = true;
-
-				scene.add(textMesh);
-
-				objectRefs.current.push(textMesh);
-			});
+			}
 
 			// Function to trigger a file download
 			const downloadFile = () => {
@@ -111,18 +111,15 @@ const Bot = () => {
 				link.href = "path/to/your/file.zip"; // Replace with your file path
 				link.download = "file.zip"; // Replace with your desired file name
 				link.click();
-
-				function name() {
-					return "downloadFile";
-				}
 			};
 
 			// Function to open a link in a new tab
-			const openLink = () => {
+			const openLink1 = () => {
 				window.open("https://www.example.com", "_blank"); // Replace with your desired URL
-				function name() {
-					return "openLink";
-				}
+			};
+
+			const openLink2 = () => {
+				window.open("https://www.example.com", "_blank"); // Replace with your desired URL
 			};
 
 			// Create hologram sprite
@@ -144,15 +141,28 @@ const Bot = () => {
 				hologramSprites.current.push(sprite);
 			}
 
-			function createRectBoundary(x, y, z, width, height, color, action, holo) {
+			function createRectBoundary(
+				x,
+				y,
+				z,
+				width,
+				height,
+				color,
+				action,
+				holo,
+				text
+			) {
 				const geometry = new THREE.PlaneGeometry(width, height);
 				geometry.translate(0, 0.5 * height, 0); // Move the plane to center it on the origin
 
 				// Convert plane geometry to edges geometry for wireframe
 				const edges = new THREE.EdgesGeometry(geometry);
 
-				const material = new THREE.LineBasicMaterial({ color: color });
-				const rectBoundary = new THREE.LineSegments(edges, material);
+				const lineMaterial = new THREE.LineBasicMaterial({
+					color: color,
+					linewidth: 10, // Thickness of the line
+				});
+				const rectBoundary = new THREE.LineSegments(edges, lineMaterial);
 
 				rectBoundary.position.set(x, y, z, holo);
 				rectBoundary.rotation.x = -Math.PI / 2; // Flat on the ground
@@ -161,15 +171,47 @@ const Bot = () => {
 
 				// Store the action with the rectangle boundary
 				rectBoundary.action = action;
-
+				createtext(text, x, y, z, color);
 				// Add to intersected objects
-				createHologramSprite(x, y + 2, z);
+				createHologramSprite(x, y + 1.3, z, holo);
 			}
 			// Create a green rectangle with download action
-			createRectBoundary(0, 0.1, -3, 1, 1, 0x00ff00, downloadFile);
+			createRectBoundary(
+				0,
+				0.1,
+				-4,
+				1,
+				1,
+				0x00ff00,
+				downloadFile,
+				"static/images/resumeim.png",
+				"Download\nResume"
+			);
 
 			// Create a red rectangle with open link action
-			createRectBoundary(1, 0.1, -3, 1, 1, 0xff0000, openLink);
+			createRectBoundary(
+				8.009,
+				0.1,
+				-5.543,
+				1,
+				1,
+				0x00ff00,
+				openLink1,
+				"static/images/social-media.png",
+				"Social\nMedia"
+			);
+
+			createRectBoundary(
+				8.237,
+				0.1,
+				-0.536,
+				1,
+				1,
+				0x00ff00,
+				openLink2,
+				"static/images/project.png",
+				"Projects"
+			);
 
 			const loader = new GLTFLoader();
 			loader.load("models/gltf/Xbot.glb", (gltf) => {
@@ -296,7 +338,7 @@ const Bot = () => {
 					.applyQuaternion(model.quaternion)
 					.normalize();
 				forwardDirection.y = 0;
-
+				console.log(model.position.x, model.position.z);
 				const newPosition = model.position
 					.clone()
 					.add(forwardDirection.multiplyScalar(moveSpeed * delta));
@@ -343,6 +385,11 @@ const Bot = () => {
 			renderer.setSize(window.innerWidth, window.innerHeight);
 		}
 
+		const dict1 = {
+			downloadFile: "Press enter to download my resume",
+			openLink1: "Press enter to connect with me",
+			openLink2: "Press enter to view my projects",
+		};
 		function checkIntersections() {
 			if (!modelRef.current) return;
 
@@ -373,10 +420,8 @@ const Bot = () => {
 
 					// Set action message based on the action
 
-					if (rectBoundary.action.name === "downloadFile") {
-						actionMessage = "Press Enter to download the file";
-					} else if (rectBoundary.action.name === "openLink") {
-						actionMessage = "Press Enter to open the link";
+					if (rectBoundary.action.name in dict1) {
+						actionMessage = dict1[rectBoundary.action.name];
 					}
 				} else {
 					rectBoundary.material.color.set(0xffffff);
@@ -437,15 +482,15 @@ const Bot = () => {
 
 	return (
 		<>
-			<div id="container"></div>;
+			<div id="container"></div>
 			<div
 				id="loading-screen"
 				style={{
 					position: "fixed",
 					top: 0,
 					left: 0,
-					width: "100%",
-					height: "100%",
+					width: "100vw",
+					height: "100vh",
 					background: "rgba(0, 0, 0, 0.8)",
 					color: "white",
 					display: "flex",
@@ -454,8 +499,17 @@ const Bot = () => {
 					fontSize: "24px",
 					fontFamily: "Arial, sans-serif",
 					zIndex: 9999,
+					overflow: "hidden", // Prevents any potential overflow issues
+					alignContent: "center",
+					textAlign: "center",
 				}}>
 				Loading...
+				<br /> It can take some time for the models to load and please view this
+				on a desktop only
+				<br />
+				controls:- <br /> W or Arrow Up to move <br /> A or Arrow Left to rotate
+				left <br /> D or Arrow Right to rotate right <br />
+				Enter to interact
 			</div>
 		</>
 	);
