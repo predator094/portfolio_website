@@ -108,8 +108,8 @@ const Bot = () => {
 			// Function to trigger a file download
 			const downloadFile = () => {
 				const link = document.createElement("a");
-				link.href = "path/to/your/file.zip"; // Replace with your file path
-				link.download = "file.zip"; // Replace with your desired file name
+				link.href = "static/files/resume.pdf"; // Replace with your file path
+				link.download = "resume.pdf"; // Replace with your desired file name
 				link.click();
 			};
 
