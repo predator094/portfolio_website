@@ -115,11 +115,11 @@ const Bot = () => {
 
 			// Function to open a link in a new tab
 			const openLink1 = () => {
-				window.open("https://www.example.com", "_blank"); // Replace with your desired URL
+				window.open("https://bento.me/anshulyadav", "_blank"); // Replace with your desired URL
 			};
 
 			const openLink2 = () => {
-				window.open("https://www.example.com", "_blank"); // Replace with your desired URL
+				window.open("https://github.com/predator094", "_blank"); // Replace with your desired URL
 			};
 
 			// Create hologram sprite
@@ -338,7 +338,7 @@ const Bot = () => {
 					.applyQuaternion(model.quaternion)
 					.normalize();
 				forwardDirection.y = 0;
-				console.log(model.position.x, model.position.z);
+
 				const newPosition = model.position
 					.clone()
 					.add(forwardDirection.multiplyScalar(moveSpeed * delta));
