@@ -482,6 +482,20 @@ const Bot = () => {
 		<>
 			<div id="container"></div>
 			<div
+				id="hud-message"
+				style={{
+					position: "absolute",
+					bottom: "20px",
+					right: "20px",
+					color: "white",
+					fontSize: "20px",
+					background: "rgba(0, 0, 0, 0.7)",
+					padding: "10px",
+					borderRadius: "5px",
+					display: "none",
+				}}></div>
+
+			<div
 				id="loading-screen"
 				style={{
 					position: "fixed",
