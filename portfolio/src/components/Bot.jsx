@@ -11,6 +11,8 @@ const Bot = () => {
 	const labRef = useRef(null);
 	const intersectedObjects = useRef([]);
 	const raycaster = new THREE.Raycaster();
+	const currentIntersectedObject = useRef(null);
+	const hologramSprites = useRef([]);
 
 	useEffect(() => {
 		let scene, renderer, camera, mixer, clock;
@@ -29,36 +31,49 @@ const Bot = () => {
 		let delta = 0;
 		const rotationSpeed = 0.1; // Rotation speed
 		let targetRotationY = 0; // Target rotation
+		const hudMessage = document.getElementById("hud-message");
+		const loadingScreen = document.getElementById("loading-screen");
+		const totalModelsToLoad = 2; // Get the HUD message element
+		let loadedModelsCount = 0;
 
 		function init() {
 			clock = new THREE.Clock();
 			scene = new THREE.Scene();
-			scene.background = new THREE.Color(0xa0a0a0);
-			scene.fog = new THREE.Fog(0xa0a0a0, 10, 50);
+			scene.background = new THREE.Color(0x000000);
 
 			// Adding hemisphere light to the scene
-			const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 3);
-			hemiLight.position.set(0, 20, 0);
+			// const hemiLight = new THREE.HemisphereLight(0xffffff, 0x8d8d8d, 3);
+			// hemiLight.position.set(0, 20, 0);
 			// scene.add(hemiLight);
 
 			// Adding point light to the scene
-			const pointLight = new THREE.PointLight(0xffffff, 30, 100);
-			pointLight.position.set(7, 4, 0);
-			pointLight.castShadow = true;
-			pointLight.shadow.mapSize.width = 512;
-			pointLight.shadow.mapSize.height = 512;
-			pointLight.shadow.camera.near = 0.5;
-			pointLight.shadow.camera.far = 500;
-			scene.add(pointLight);
+			const pointLight1 = new THREE.PointLight(0xffffff, 30, 100);
+			pointLight1.position.set(7, 4, -3);
+			pointLight1.castShadow = true;
+			pointLight1.shadow.mapSize.width = 256;
+			pointLight1.shadow.mapSize.height = 256;
+			pointLight1.shadow.camera.near = 0.5;
+			pointLight1.shadow.camera.far = 50;
+
+			// scene.add(pointLight1);
+
+			const pointLight2 = new THREE.PointLight(0xffffff, 30, 100);
+			pointLight2.position.set(1, 4, 0);
+			pointLight2.castShadow = true;
+			pointLight2.shadow.mapSize.width = 256;
+			pointLight2.shadow.mapSize.height = 256;
+			pointLight2.shadow.camera.near = 0.5;
+			pointLight2.shadow.camera.far = 50;
+			scene.add(pointLight2);
 
 			// Creating ground mesh
-			const mesh = new THREE.Mesh(
-				new THREE.PlaneGeometry(1000, 1000),
-				new THREE.MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false })
-			);
-			mesh.rotation.x = -Math.PI / 2;
-			mesh.receiveShadow = true;
-			scene.add(mesh);
+			// const mesh = new THREE.Mesh(
+			// 	new THREE.PlaneGeometry(1000, 1000),
+			// 	new THREE.MeshPhongMaterial({ color: 0xcbcbcb, depthWrite: false })
+			// );
+			// mesh.rotation.x = -Math.PI / 2;
+			// mesh.receiveShadow = true;
+			// scene.add(mesh);
 
 			// Load font and add text to the ground
 			const fontLoader = new FontLoader();
@@ -90,6 +105,72 @@ const Bot = () => {
 				objectRefs.current.push(textMesh);
 			});
 
+			// Function to trigger a file download
+			const downloadFile = () => {
+				const link = document.createElement("a");
+				link.href = "path/to/your/file.zip"; // Replace with your file path
+				link.download = "file.zip"; // Replace with your desired file name
+				link.click();
+
+				function name() {
+					return "downloadFile";
+				}
+			};
+
+			// Function to open a link in a new tab
+			const openLink = () => {
+				window.open("https://www.example.com", "_blank"); // Replace with your desired URL
+				function name() {
+					return "openLink";
+				}
+			};
+
+			// Create hologram sprite
+			function createHologramSprite(x, y, z, holo) {
+				// Load hologram texture
+				const textureLoader = new THREE.TextureLoader();
+				const hologramTexture = textureLoader.load(holo); // Replace with your hologram image path
+				const spriteMaterial = new THREE.SpriteMaterial({
+					map: hologramTexture,
+					transparent: true,
+					opacity: 0.5,
+					blending: THREE.AdditiveBlending,
+				});
+				const sprite = new THREE.Sprite(spriteMaterial);
+				sprite.scale.set(1, 1, 1); // Adjust scale as needed
+				sprite.position.set(x, y, z);
+				sprite.visible = false; // Initially hidden
+				scene.add(sprite);
+				hologramSprites.current.push(sprite);
+			}
+
+			function createRectBoundary(x, y, z, width, height, color, action, holo) {
+				const geometry = new THREE.PlaneGeometry(width, height);
+				geometry.translate(0, 0.5 * height, 0); // Move the plane to center it on the origin
+
+				// Convert plane geometry to edges geometry for wireframe
+				const edges = new THREE.EdgesGeometry(geometry);
+
+				const material = new THREE.LineBasicMaterial({ color: color });
+				const rectBoundary = new THREE.LineSegments(edges, material);
+
+				rectBoundary.position.set(x, y, z, holo);
+				rectBoundary.rotation.x = -Math.PI / 2; // Flat on the ground
+				scene.add(rectBoundary);
+				objectRefs.current.push(rectBoundary);
+
+				// Store the action with the rectangle boundary
+				rectBoundary.action = action;
+
+				// Add to intersected objects
+				createHologramSprite(x, y + 2, z);
+			}
+			// Create a green rectangle with download action
+			createRectBoundary(0, 0.1, -3, 1, 1, 0x00ff00, downloadFile);
+
+			// Create a red rectangle with open link action
+			createRectBoundary(1, 0.1, -3, 1, 1, 0xff0000, openLink);
+
 			const loader = new GLTFLoader();
 			loader.load("models/gltf/Xbot.glb", (gltf) => {
 				model = gltf.scene;
@@ -116,7 +197,8 @@ const Bot = () => {
 				currentAction = baseActions.idle.action;
 				currentAction.play();
 				modelRef.current = model;
-				animate();
+				loadedModelsCount++;
+				checkLoadingComplete();
 			});
 
 			loader.load("models/gltf/sci-fi_lab.glb", (gltf) => {
@@ -129,10 +211,10 @@ const Bot = () => {
 						object.receiveShadow = true;
 
 						if (object.material.map) {
-							object.material.map.needsUpdate = true;
+							object.material.map.needsUpdate = false;
 						}
 
-						object.material.needsUpdate = true;
+						object.material.needsUpdate = false;
 
 						intersectedObjects.current.push(object);
 					}
@@ -140,6 +222,8 @@ const Bot = () => {
 
 				labRef.current = lab;
 				scene.add(lab);
+				loadedModelsCount++;
+				checkLoadingComplete();
 			});
 
 			renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -160,7 +244,7 @@ const Bot = () => {
 			const controls = new OrbitControls(camera, renderer.domElement);
 			controls.enablePan = false;
 			controls.enableZoom = false;
-			controls.enableRotate = true;
+			controls.enableRotate = false;
 			controls.target.set(0, 1, 0);
 			controls.update();
 
@@ -170,7 +254,6 @@ const Bot = () => {
 			window.addEventListener("keydown", handleKeyDown);
 			window.addEventListener("keyup", handleKeyUp);
 		}
-
 		function handleKeyDown(event) {
 			if (event.code === "ArrowUp" || event.code === "KeyW") {
 				if (!isWalking) {
@@ -181,6 +264,14 @@ const Bot = () => {
 				targetRotationY += Math.PI / 2; // Set the target rotation
 			} else if (event.code === "ArrowRight" || event.code === "KeyD") {
 				targetRotationY -= Math.PI / 2; // Set the target rotation
+			} else if (event.code === "Enter") {
+				// Perform the action if an object is intersected
+				if (
+					currentIntersectedObject.current &&
+					currentIntersectedObject.current.action
+				) {
+					currentIntersectedObject.current.action(); // Execute the associated function
+				}
 			}
 		}
 
@@ -215,7 +306,9 @@ const Bot = () => {
 				raycaster.far = moveSpeed * delta * (1 + safetyMargin);
 
 				const intersects = raycaster.intersectObjects(
-					intersectedObjects.current,
+					intersectedObjects.current.filter(
+						(object) => object.position.distanceTo(model.position) < 10
+					), // Filter for nearby objects
 					true
 				);
 
@@ -227,7 +320,14 @@ const Bot = () => {
 					);
 				}
 
+				// Restrict movement to the defined boundaries
 				if (!isColliding) {
+					if (newPosition.x < -2.67) {
+						newPosition.x = model.position.x; // Prevent movement further left
+					}
+					if (newPosition.z > 0.79) {
+						newPosition.z = model.position.z; // Prevent movement further forward
+					}
 					model.position.copy(newPosition);
 
 					camera.position.x = model.position.x;
@@ -245,18 +345,62 @@ const Bot = () => {
 
 		function checkIntersections() {
 			if (!modelRef.current) return;
-			const modelBoundingBox = new THREE.Box3().setFromObject(modelRef.current);
-			objectRefs.current.forEach((textMesh) => {
-				const textBoundingBox = new THREE.Box3().setFromObject(textMesh);
 
-				if (modelBoundingBox.intersectsBox(textBoundingBox)) {
-					textMesh.material.color.set(0x00ff00);
+			const modelBoundingBox = new THREE.Box3().setFromObject(modelRef.current);
+			currentIntersectedObject.current = null; // Reset the intersected object
+			let actionMessage = "";
+
+			objectRefs.current.forEach((rectBoundary) => {
+				const boundingBox = new THREE.Box3().setFromObject(rectBoundary);
+				const sprite =
+					hologramSprites.current[objectRefs.current.indexOf(rectBoundary)];
+
+				if (modelBoundingBox.intersectsBox(boundingBox)) {
+					rectBoundary.material.color.set(0x00ff00);
+
+					if (sprite) {
+						sprite.visible = true;
+						sprite.scale.x = Math.min(sprite.scale.x + 0.05, 1); // Smooth scaling
+						sprite.scale.y = Math.min(sprite.scale.y + 0.05, 1);
+						sprite.position.set(
+							rectBoundary.position.x,
+							rectBoundary.position.y + 1,
+							rectBoundary.position.z
+						);
+					}
+
+					currentIntersectedObject.current = rectBoundary; // Set the intersected object
+
+					// Set action message based on the action
+
+					if (rectBoundary.action.name === "downloadFile") {
+						actionMessage = "Press Enter to download the file";
+					} else if (rectBoundary.action.name === "openLink") {
+						actionMessage = "Press Enter to open the link";
+					}
 				} else {
-					textMesh.material.color.set(0xff0000);
+					rectBoundary.material.color.set(0xffffff);
+
+					if (sprite) {
+						sprite.scale.x = Math.max(sprite.scale.x - 0.05, 0); // Smooth scaling
+						sprite.scale.y = Math.max(sprite.scale.y - 0.05, 0);
+						if (sprite.scale.x === 0) {
+							sprite.visible = false;
+						}
+					}
 				}
 			});
-		}
 
+			// Update HUD message
+			hudMessage.textContent = actionMessage;
+			hudMessage.style.display = actionMessage ? "block" : "none";
+		}
+		function checkLoadingComplete() {
+			if (loadedModelsCount >= totalModelsToLoad) {
+				loadingScreen.style.display = "none"; // Hide loading screen
+				animate(); // Start animation loop
+			}
+		}
 		function animate() {
 			delta = clock.getDelta();
 			mixer.update(delta);
@@ -291,7 +435,30 @@ const Bot = () => {
 		};
 	}, []);
 
-	return <div id="container" style={{ width: "100vw", height: "100vh" }}></div>;
+	return (
+		<>
+			<div id="container"></div>;
+			<div
+				id="loading-screen"
+				style={{
+					position: "fixed",
+					top: 0,
+					left: 0,
+					width: "100%",
+					height: "100%",
+					background: "rgba(0, 0, 0, 0.8)",
+					color: "white",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					fontSize: "24px",
+					fontFamily: "Arial, sans-serif",
+					zIndex: 9999,
+				}}>
+				Loading...
+			</div>
+		</>
+	);
 };
 
 export default Bot;
