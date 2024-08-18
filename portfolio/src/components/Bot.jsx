@@ -253,10 +253,10 @@ const Bot = () => {
 						object.receiveShadow = true;
 
 						if (object.material.map) {
-							object.material.map.needsUpdate = false;
+							object.material.map.needsUpdate = true;
 						}
 
-						object.material.needsUpdate = false;
+						object.material.needsUpdate = true;
 
 						intersectedObjects.current.push(object);
 					}
@@ -348,9 +348,7 @@ const Bot = () => {
 				raycaster.far = moveSpeed * delta * (1 + safetyMargin);
 
 				const intersects = raycaster.intersectObjects(
-					intersectedObjects.current.filter(
-						(object) => object.position.distanceTo(model.position) < 10
-					), // Filter for nearby objects
+					intersectedObjects.current,
 					true
 				);
 
